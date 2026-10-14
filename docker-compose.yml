@@ -1,0 +1,48 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: redisshop-redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass RedisShop_Dev_2026
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy noeviction
+      --notify-keyspace-events KEA
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "RedisShop_Dev_2026", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisshop-insight
+    ports:
+      - "5540:5540"
+    volumes:
+      - insight-data:/data
+    depends_on:
+      - redis
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: redisshop-sql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "RedisShop_Dev_2026!"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql-data:/var/opt/mssql
+
+volumes:
+  redis-data:
+  insight-data:
+  sql-data:
